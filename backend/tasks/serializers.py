@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Task
+from .models import Task, TaskDependency
 
 
 class TaskSerializer(serializers.ModelSerializer):
@@ -13,14 +13,10 @@ class TaskSerializer(serializers.ModelSerializer):
             "description",
             "status",
             "dependencies",
-            "created_at",
-            "updated_at",
         ]
 
     def get_dependencies(self, obj):
-        """
-        Returns a list of task IDs that this task depends on
-        """
+        # Return list of task IDs this task depends on
         return list(
             obj.dependencies.values_list("depends_on_id", flat=True)
         )

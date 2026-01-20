@@ -37,7 +37,20 @@ export default function App() {
 
   /* ---------- HELPERS ---------- */
   const dependentTasks = (id) =>
-    tasks.filter((t) => t.dependencies.includes(id));
+    tasks.filter((t) => (t.dependencies || []).includes(id));
+
+  /* ---------- AUTO UPDATE DEPENDENTS ---------- */
+  const autoUpdateDependents = async (completedTaskId) => {
+    const dependents = tasks.filter((t) =>
+      (t.dependencies || []).includes(completedTaskId)
+    );
+
+    for (const task of dependents) {
+      await fetch(`${API_URL}${task.id}/auto-update/`, {
+        method: "POST",
+      });
+    }
+  };
 
   /* ---------- ACTIONS ---------- */
   const addTask = async () => {
@@ -73,8 +86,15 @@ export default function App() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: newStatus }),
       });
+
       if (!res.ok) throw new Error();
-      loadTasks();
+
+      // 🔥 AUTO STATUS UPDATE WHEN DEPENDENCY COMPLETES
+      if (newStatus === "completed") {
+        await autoUpdateDependents(id);
+      }
+
+      await loadTasks();
       showToast("success", "Status updated");
     } catch {
       showToast("error", "Status update failed");
@@ -95,19 +115,16 @@ export default function App() {
 
     setLoading(true);
     try {
-      const res = await fetch(
-        `${API_URL}${taskId}/dependencies/`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ depends_on_id: depId }),
-        }
-      );
+      const res = await fetch(`${API_URL}${taskId}/dependencies/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ depends_on_id: depId }),
+      });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
 
-      loadTasks();
+      await loadTasks();
       setTaskId("");
       setDepId("");
       showToast("success", "Dependency added");
@@ -246,70 +263,68 @@ export default function App() {
         </button>
       </section>
 
-      {/* GRAPH */}
-    {/* DEPENDENCY GRAPH */}
-<section className="card">
-  <h2>Dependency Graph</h2>
+      {/* DEPENDENCY GRAPH */}
+      <section className="card">
+        <h2>Dependency Graph</h2>
 
-  <svg width="100%" height="240">
-    {tasks.map((t, i) =>
-      (t.dependencies || []).map((d) => {
-        const from = tasks.findIndex((x) => x.id === d);
-        if (from === -1) return null;
+        <svg width="100%" height="240">
+          {tasks.map((t, i) =>
+            (t.dependencies || []).map((d) => {
+              const from = tasks.findIndex((x) => x.id === d);
+              if (from === -1) return null;
 
-        return (
-          <line
-            key={`${t.id}-${d}`}
-            x1={from * spacing + 80}
-            y1={centerY}
-            x2={i * spacing + 80}
-            y2={centerY}
-            stroke="#94a3b8"
-            strokeWidth="2"
-          />
-        );
-      })
-    )}
+              return (
+                <line
+                  key={`${t.id}-${d}`}
+                  x1={from * spacing + 80}
+                  y1={centerY}
+                  x2={i * spacing + 80}
+                  y2={centerY}
+                  stroke="#94a3b8"
+                  strokeWidth="2"
+                />
+              );
+            })
+          )}
 
-    {tasks.map((t, i) => (
-      <g key={t.id}>
-        <circle
-          cx={i * spacing + 80}
-          cy={centerY}
-          r={radius}
-          fill={
-            t.status === "completed"
-              ? "#22c55e"
-              : t.status === "in_progress"
-              ? "#38bdf8"
-              : t.status === "blocked"
-              ? "#ef4444"
-              : "#64748b"
-          }
-        />
+          {tasks.map((t, i) => (
+            <g key={t.id}>
+              <circle
+                cx={i * spacing + 80}
+                cy={centerY}
+                r={radius}
+                fill={
+                  t.status === "completed"
+                    ? "#22c55e"
+                    : t.status === "in_progress"
+                    ? "#38bdf8"
+                    : t.status === "blocked"
+                    ? "#ef4444"
+                    : "#64748b"
+                }
+              />
 
-        <text
-          x={i * spacing + 80}
-          y={centerY}
-          textAnchor="middle"
-          fontSize="11"
-          fontWeight="700"
-        >
-          {splitText(t.title).map((line, idx) => (
-            <tspan
-              key={idx}
-              x={i * spacing + 80}
-              dy={idx === 0 ? "-6" : "14"}
-            >
-              {line}
-            </tspan>
+              <text
+                x={i * spacing + 80}
+                y={centerY}
+                textAnchor="middle"
+                fontSize="11"
+                fontWeight="700"
+              >
+                {splitText(t.title).map((line, idx) => (
+                  <tspan
+                    key={idx}
+                    x={i * spacing + 80}
+                    dy={idx === 0 ? "-6" : "14"}
+                  >
+                    {line}
+                  </tspan>
+                ))}
+              </text>
+            </g>
           ))}
-        </text>
-      </g>
-    ))}
-  </svg>
-</section>
-
+        </svg>
+      </section>
 
       {/* DELETE MODAL */}
       {deleteId && (
