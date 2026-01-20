@@ -4,7 +4,7 @@ from rest_framework.response import Response
 
 from .models import Task, TaskDependency
 from .serializers import TaskSerializer
-from .utils import detect_cycle, recompute_task_status, propagate_status
+from .utils import detect_cycle, recompute_task_status
 
 
 class TaskViewSet(viewsets.ModelViewSet):
@@ -44,7 +44,6 @@ class TaskViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Create dependency
         TaskDependency.objects.create(
             task_id=task.id,
             depends_on_id=depends_on_id
@@ -57,11 +56,11 @@ class TaskViewSet(viewsets.ModelViewSet):
             status=status.HTTP_201_CREATED
         )
 
-    def partial_update(self, request, *args, **kwargs):
-        response = super().partial_update(request, *args, **kwargs)
+    def perform_update(self, serializer):
+        task = serializer.save()
 
-        task = self.get_object()
+        if task.status == "completed":
+            dependent_links = TaskDependency.objects.filter(depends_on=task)
 
-        propagate_status(task)
-
-        return response
+            for link in dependent_links:
+                recompute_task_status(link.task)
