@@ -1,0 +1,32 @@
+.container {
+  padding: 40px;
+  font-family: Arial, sans-serif;
+}
+
+.heading {
+  font-size: 28px;
+  margin-bottom: 20px;
+}
+
+.task-card {
+  border: 1px solid #ddd;
+  padding: 16px;
+  margin-bottom: 12px;
+  border-radius: 6px;
+}
+
+.status {
+  font-weight: bold;
+}
+
+.completed {
+  color: green;
+}
+
+.in_progress {
+  color: blue;
+}
+
+.pending {
+  color: gray;
+}
