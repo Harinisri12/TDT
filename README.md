@@ -1,6 +1,6 @@
 # Task Dependency Management System
 
-A full-stack Task Dependency Management System where tasks can depend on other tasks, circular dependencies are detected automatically, task statuses update based on dependencies, and dependencies are visualized as a graph.
+A full-stack **Task Dependency Management System** where tasks can depend on other tasks, circular dependencies are detected automatically, task statuses update based on dependencies, and dependencies are visualized as a graph.
 
 ---
 
@@ -11,7 +11,7 @@ A full-stack Task Dependency Management System where tasks can depend on other t
 ```bash
 cd backend
 python -m venv venv
-source venv/bin/activate   # Windows: venv\Scripts\activate
+source venv/bin/activate     # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 python manage.py migrate
 python manage.py runserver
@@ -45,18 +45,19 @@ http://localhost:3000
 
 ### Tasks
 
-| Method | Endpoint           | Description        |
-| ------ | ------------------ | ------------------ |
-| GET    | `/api/tasks/`      | Fetch all tasks    |
-| POST   | `/api/tasks/`      | Create a new task  |
-| PATCH  | `/api/tasks/{id}/` | Update task status |
-| DELETE | `/api/tasks/{id}/` | Delete a task      |
+| Method | Endpoint                       | Description                                   |
+| ------ | ------------------------------ | --------------------------------------------- |
+| GET    | `/api/tasks/`                  | Fetch all tasks                               |
+| POST   | `/api/tasks/`                  | Create a new task                             |
+| PATCH  | `/api/tasks/{id}/`             | Update task status                            |
+| DELETE | `/api/tasks/{id}/`             | Delete a task                                 |
+| POST   | `/api/tasks/{id}/auto-update/` | Auto-update task status based on dependencies |
 
 ---
 
 ### Dependencies
 
-**Add dependency to a task**
+Add a dependency to a task:
 
 ```
 POST /api/tasks/{task_id}/dependencies/
@@ -85,11 +86,22 @@ POST /api/tasks/{task_id}/dependencies/
 
 * Create, update, and delete tasks
 * Add multiple dependencies to tasks
-* Detect and prevent circular dependencies (DFS)
-* Auto-update task status based on dependency completion
-* Interactive dependency graph using SVG
+* Detect and prevent circular dependencies using Depth-First Search (DFS)
+* Auto-update task status based on dependency completion (backend + UI)
+* Dependency graph visualization using SVG
 * Confirmation modal before deleting dependent tasks
-* User-friendly error and success messages
+* User-friendly success and error messages
+
+---
+
+## 🧪 Example Workflow
+
+1. Create two tasks **A** and **B**
+2. Add dependency: **B depends on A**
+3. Mark task **A** as `completed`
+4. Task **B** automatically moves to `in_progress`
+
+This demonstrates automatic dependency-based status updates.
 
 ---
 
@@ -113,9 +125,7 @@ POST /api/tasks/{task_id}/dependencies/
 
 ## 📌 Notes
 
-* Circular dependency detection is implemented using Depth-First Search (DFS)
-* Exact cycle path is returned when a cycle is detected
-* Graph visualization is implemented without external libraries
-* UI focuses on usability and clarity
-
----
+* Circular dependency detection is implemented using **Depth-First Search (DFS)**
+* The exact cycle path is returned when a cycle is detected
+* Graph visualization is non-interactive and rendered using SVG
+* UI focuses on clarity, usability, and real-time updates
